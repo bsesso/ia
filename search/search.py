@@ -87,26 +87,95 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
 
-    state = problem.getStartState()
-    print "Start:", state
-    print "Pacman State", state.getPacmanState()
+    frontier = util.Stack()
+    frontier.push(problem.getStartState())
+    explored = []
+    parents = {}
 
+    while (not frontier.isEmpty()):
+        currentState = frontier.pop()
+        # print "frontier: ", frontier.list
+        # print "current:  ", currentState
+        if (problem.isGoalState(currentState)):
+            child = currentState
+            startState = problem.getStartState()
+            moves = []
+            while (child != startState):
+                # print "child:  ", child
+                # print "parent: ", parents[child][0]
+                moves.insert(0, parents[child][1])
+                child = parents[child][0]
+            return moves
 
-    # "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+        explored.append(currentState)
+        for successor in problem.getSuccessors(currentState):
+            if (not successor[0] in explored):
+            # if (not successor[0] in explored) and (not successor[0] in frontier.list):
+                frontier.push(successor[0])
+                parents[successor[0]] = [currentState, successor[1]]
+
+    return []
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.Queue()
+    frontier.push(problem.getStartState())
+    explored = []
+    parents = {}
+
+    while (not frontier.isEmpty()):
+        currentState = frontier.pop()
+        if (problem.isGoalState(currentState)):
+            child = currentState
+            startState = problem.getStartState()
+            moves = []
+            while (child != startState):
+                moves.insert(0, parents[child][1])
+                child = parents[child][0]
+            return moves
+
+        explored.append(currentState)
+        for successor in problem.getSuccessors(currentState):
+            if (not successor[0] in explored) and (not successor[0] in frontier.list):
+                frontier.push(successor[0])
+                parents[successor[0]] = [currentState, successor[1]]
+
+    return []
 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    frontier.push(problem.getStartState(), 0)
+    explored = []
+    parents = {}
+    parents[problem.getStartState()] = [None, None, 0]
 
+    while (not frontier.isEmpty()):
+        currentState = frontier.pop()
+        if (problem.isGoalState(currentState)):
+            child = currentState
+            startState = problem.getStartState()
+            moves = []
+            while (child != startState):
+                moves.insert(0, parents[child][1])
+                child = parents[child][0]
+            return moves
+
+        explored.append(currentState)
+        for successor in problem.getSuccessors(currentState):
+            child = successor[0]
+            cost = successor[2] + parents[currentState][2]
+            if (not child in explored) and (not child in map(lambda x: x[2], frontier.heap)):
+                frontier.push(child, cost)
+                parents[child] = [currentState, successor[1], cost]
+            elif (child in map(lambda x: x[2], frontier.heap) and cost < parents[child][2]):
+                frontier.update(child, cost)
+                parents[child] = [currentState, successor[1], cost]
+
+
+    return []
 
 def nullHeuristic(state, problem=None):
     """
@@ -118,14 +187,77 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    frontier.push(problem.getStartState(), 0)
+    explored = []
+    parents = {}
+    parents[problem.getStartState()] = [None, None, 0]
+
+    while (not frontier.isEmpty()):
+        currentState = frontier.pop()
+        if (problem.isGoalState(currentState)):
+            child = currentState
+            startState = problem.getStartState()
+            moves = []
+            while (child != startState):
+                moves.insert(0, parents[child][1])
+                child = parents[child][0]
+            return moves
+
+        explored.append(currentState)
+        for successor in problem.getSuccessors(currentState):
+            child = successor[0]
+            cost = successor[2] + parents[currentState][2]
+            if (not child in explored) and (not child in map(lambda x: x[2], frontier.heap)):
+                frontier.push(child, cost + heuristic(child, problem))
+                parents[child] = [currentState, successor[1], cost]
+            elif (child in map(lambda x: x[2], frontier.heap) and cost < parents[child][2]):
+                frontier.update(child, cost + heuristic(child, problem))
+                parents[child] = [currentState, successor[1], cost]
+
+
+    return []
+
 
 
 def learningRealTimeAStar(problem, heuristic=nullHeuristic):
     """Execute a number of trials of LRTA* and return the best plan found."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    parents = {}
+    h = {}
+    currentState = problem.getStartState()
+    h[currentState] = heuristic(currentState, problem)
+    moves = {}
+
+    while (not problem.isGoalState(currentState)):
+        minCost = float("inf")
+        for successor in problem.getSuccessors(currentState):
+            child = successor[0]
+            cost = successor[2]
+            if child in h:
+                cost += h[child]
+            else:
+                cost += heuristic(child, problem)
+           
+            if cost < minCost:
+                minCost =  cost
+                nextState = child
+                move = (successor[1], nextState)
+
+        if minCost > h[currentState]:
+            h[currentState] = minCost
+
+        moves[currentState] = move
+        currentState = nextState
+        if not currentState in h:
+            h[currentState] = heuristic(currentState, problem)
+
+    moveList = []
+    currentState = problem.getStartState()
+    while (not problem.isGoalState(currentState)):
+        moveList.append(moves[currentState][0])
+        currentState = moves[currentState][1]
+
+    return moveList
 
     # MAXTRIALS = ...
     
